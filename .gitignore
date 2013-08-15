@@ -1,0 +1,20 @@
+.vlt
+.DS_Store
+*.iml
+target
+.checkstyle
+.classpath
+.project
+.settings
+*.dir
+MANIFEST.MF
+bin
+.idea
+.dist
+.tmp
+build/node_modules/**
+*.*~
+*.swp
+
+# Ignore Sass' cache
+*.sass-cache
