@@ -19,7 +19,6 @@
     };
 
     AppModel.prototype.addImage = function(image) {
-      console.log(this);
       return this.googleImages.add(image);
     };
 

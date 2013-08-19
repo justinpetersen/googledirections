@@ -25,20 +25,37 @@
     },
     onReposition: function() {
       var imageURL;
-      imageURL = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + this.currentCoords.lat + "," + this.currentCoords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
-      return $(".current-image").attr("src", imageURL);
+      console.log("@currentFrame: " + this.currentFrame);
+      this.currentImage = this.images.at(this.currentFrame);
+      console.log(this.images);
+      console.log(this.currentImage);
+      imageURL = ("http://maps.googleapis.com/maps/api/streetview?gid=" + this.currentImage.cid + "&size=400x400&location=") + this.currentImage.attributes.coords.lat + "," + this.currentImage.attributes.coords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
+      $(".current-image").attr("src", imageURL);
+      this.loadedImages = this.currentFrame;
+      return this.newHeading = $("#degrees").val();
     },
     onPause: function() {
-      var imageURL;
+      var i;
       if (!this.isPaused) {
+        if (this.newHeading !== this.currentHeading) {
+          alert('updating frames');
+          i = this.currentFrame;
+          while (i < this.images.length) {
+            (this.images.at(i)).attributes.directionalDegrees = this.newHeading;
+            console.log(this.images.at(i));
+            i++;
+          }
+          $(".current-image").attr("src", (this.images.at(this.currentFrame)).url());
+          this.currentHeading = this.newHeading;
+        }
         window.clearInterval(this.ticker);
         this.ticker = 0;
         this.isPaused = true;
         $(".pause").attr("value", "Resume");
         return $(".reposition").show();
       } else {
-        imageURL = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + this.currentCoords.lat + "," + this.currentCoords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
-        return $(".current-image").attr("src", imageURL);
+        this.isPaused = false;
+        return $(".current-image").attr("src", (this.images.at(this.currentFrame)).url());
       }
     },
     initialize: function() {
@@ -140,7 +157,6 @@
       this.images = images;
       i = 0;
       while (i < images.length) {
-        console.log(this.images[i]);
         i++;
       }
       this.totalFrames = images.length;
@@ -155,7 +171,7 @@
       var image, imageName, li, that;
       console.log("ThreeSixtyView.loadImage( )");
       li = document.createElement("li");
-      imageName = this.images[this.loadedImages];
+      imageName = (this.images.at(this.loadedImages)).url();
       image = $("<img>").attr("src", imageName).addClass("previous-image").appendTo(li);
       this.frames.push(image);
       $("#threesixty_images").append(li);
@@ -180,12 +196,15 @@
         console.log("All images loaded");
         this.frames[0].removeClass("previous-image").addClass("current-image");
         that = this;
-        return $("#spinner").fadeOut("slow", function() {
+        $("#spinner").fadeOut("slow", function() {
           that.spinner.hide();
           return that.showThreesixty();
         });
+        return alert('dpnoe');
       } else {
-        return this.loadImage();
+        if (!this.isPaused) {
+          return this.loadImage();
+        }
       }
     },
     /*
@@ -242,33 +261,19 @@
     */
 
     showCurrentFrame: function() {
-      var coordPieces, coords, heading, imageURL, lat, lng, pieces;
+      console.log(this.getNormalizedCurrentFrame());
       this.frames[this.getNormalizedCurrentFrame()].removeClass("previous-image").addClass("current-image");
-      imageURL = $(".current-image").attr("src");
-      pieces = imageURL.split("location=");
-      pieces = pieces[1].split("&heading=");
-      coords = pieces[0];
-      coordPieces = coords.split(",");
-      lat = coordPieces[0];
-      lng = coordPieces[1];
-      this.currentCoords.lat = lat;
-      this.currentCoords.lng = lng;
-      pieces = pieces[1].split("&sensor=");
-      heading = pieces[0];
-      $("#current-coordinates").html("Coords: " + lat + "," + lng);
-      return $("#degrees").val(heading);
+      this.recentFrame = this.currentFrame - 1;
+      this.currentImage = this.images.at(this.recentFrame);
+      $("#current-coordinates").html("Frame: " + this.recentFrame + "<br>cid: " + this.currentImage.cid + ", Coords: " + this.currentImage.attributes.coords.lat + "," + this.currentImage.attributes.coords.lng);
+      return $("#degrees").val(this.currentImage.attributes.directionalDegrees);
     },
     /*
     Returns the "currentFrame" value translated to a value inside the range of 0 and "totalFrames"
     */
 
     getNormalizedCurrentFrame: function() {
-      var c;
-      c = -Math.ceil(this.currentFrame % this.totalFrames);
-      if (c < 0) {
-        c += this.totalFrames - 1;
-      }
-      return c;
+      return this.currentFrame;
     },
     /*
     Returns a simple event regarding the original event is a mouse event or a touch event.

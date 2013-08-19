@@ -12,10 +12,7 @@
       var change, target;
       console.log("HomeView.onChange( )");
       target = event.target;
-      change = {};
-      change[target.name] = target.value;
-      this.model.set(change);
-      return console.log(target.name + ": " + target.value);
+      return change = {};
     },
     onGetDirections: function() {
       console.log("HomeView.onGetDirections( )");
@@ -132,13 +129,16 @@
         points = google.maps.geometry.encoding.decodePath(steps[i].polyline.points);
         j = 0;
         while (j < points.length) {
-          console.log(points[j].lat() + ", " + points[j].lng());
-          console.log(this.app);
           image = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + points[j].lat() + "," + points[j].lng() + "&heading=75&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
           images.unshift(image);
           googleImage = new window.GoogleImage();
           googleImage.attributes.url = image;
-          googleImage.attributes.directionalDegrese = 75;
+          googleImage.attributes.directionalDegrees = 75;
+          googleImage.attributes.imageId = j;
+          googleImage.attributes.coords = {
+            'lat': points[j].lat(),
+            'lng': points[j].lng()
+          };
           this.app.addImage(googleImage);
           j++;
         }
@@ -146,7 +146,9 @@
       }
       if (!this.threeSixtyView) {
         this.threeSixtyView = new ThreeSixtyView();
-        this.threeSixtyView.setImages(images);
+        console.log("@app.attributes.googleImages");
+        console.log(this.app.attributes.googleImages);
+        this.threeSixtyView.setImages(this.app.attributes.googleImages);
       }
       return $("#threesixty_container").html(this.threeSixtyView.el);
     }

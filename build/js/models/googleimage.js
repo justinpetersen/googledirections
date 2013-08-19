@@ -17,8 +17,8 @@
       coords: {}
     };
 
-    GoogleImage.prototype.initiialize = function() {
-      return alert('google');
+    GoogleImage.prototype.url = function() {
+      return ("http://maps.googleapis.com/maps/api/streetview?gid=" + this.cid + "&size=400x400&location=") + this.attributes.coords.lat + "," + this.attributes.coords.lng + "&heading=" + this.attributes.directionalDegrees + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
     };
 
     return GoogleImage;

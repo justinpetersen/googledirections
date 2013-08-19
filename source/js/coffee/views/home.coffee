@@ -13,9 +13,9 @@ window.HomeView = Backbone.View.extend(
     # Apply the change to the model
     target = event.target
     change = {}
-    change[target.name] = target.value
-    @model.set change
-    console.log target.name + ": " + target.value
+    #change[target.name] = target.value
+    #@model.set change
+    #console.log target.name + ": " + target.value
 
   onGetDirections: ->
     console.log "HomeView.onGetDirections( )"
@@ -220,12 +220,6 @@ window.HomeView = Backbone.View.extend(
       j = 0
 
       while j < points.length
-        console.log points[j].lat() + ", " + points[j].lng()
-
-
-        console.log @app
-
-
 
         image = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + points[j].lat() + "," + points[j].lng() + "&heading=75&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU"
         images.unshift image
@@ -235,6 +229,9 @@ window.HomeView = Backbone.View.extend(
         googleImage.attributes.url = image
         googleImage.attributes.directionalDegrees = 75
         googleImage.attributes.imageId = j
+        googleImage.attributes.coords =
+          'lat': points[j].lat()
+          'lng': points[j].lng()
 
         # add to image collection
         @app.addImage googleImage
@@ -244,6 +241,8 @@ window.HomeView = Backbone.View.extend(
       i++
     unless @threeSixtyView
       @threeSixtyView = new ThreeSixtyView()
-      #@threeSixtyView.setImages images
+      console.log "@app.attributes.googleImages"
+      console.log @app.attributes.googleImages
+      @threeSixtyView.setImages @app.attributes.googleImages
     $("#threesixty_container").html @threeSixtyView.el
 )

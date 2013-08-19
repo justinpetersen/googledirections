@@ -8,7 +8,6 @@ class window.AppModel extends Backbone.Model
       googleImages: @googleImages
 
   addImage: (image) ->
-    console.log @
     @googleImages.add image
 
 

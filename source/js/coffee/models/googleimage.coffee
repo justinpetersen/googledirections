@@ -10,5 +10,6 @@ class window.GoogleImage extends Backbone.Model
     directionalDegrees: ''
     coords: {}
 
-  initiialize: ->
-    alert 'google'
+  url: ->
+    "http://maps.googleapis.com/maps/api/streetview?gid=#{@cid}&size=400x400&location=" + @attributes.coords.lat + "," + @attributes.coords.lng + "&heading=" + @attributes.directionalDegrees + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU"
+
