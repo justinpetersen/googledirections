@@ -82,8 +82,7 @@
       return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
     },
     initialize: function() {
-      window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
-      window.requestFileSystem(window.PERSISTANT, 5 * 1024 * 1024, this.onFileSystemInit, this.onFileSystemError);
+      this.app = new window.AppModel();
       this.model.set({
         originAddress: "36.057333,-112.143586",
         destinationAddress: "36.065096,-112.137107"
@@ -122,7 +121,7 @@
       return this.directionsRenderer.setPanel(document.getElementById("directions_container"));
     },
     renderRoute: function(result) {
-      var i, image, images, j, points, steps;
+      var googleImage, i, image, images, j, points, steps;
       this.directionsRenderer.setDirections(result);
       images = [];
       image = "";
@@ -134,8 +133,13 @@
         j = 0;
         while (j < points.length) {
           console.log(points[j].lat() + ", " + points[j].lng());
+          console.log(this.app);
           image = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + points[j].lat() + "," + points[j].lng() + "&heading=75&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
           images.unshift(image);
+          googleImage = new window.GoogleImage();
+          googleImage.attributes.url = image;
+          googleImage.attributes.directionalDegrese = 75;
+          this.app.addImage(googleImage);
           j++;
         }
         i++;

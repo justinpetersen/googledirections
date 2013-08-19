@@ -10,7 +10,9 @@
     },
     initialize: function() {
       this.headerView = new HeaderView();
-      return $(".header").html(this.headerView.el);
+      $(".header").html(this.headerView.el);
+      this.image = new GoogleImage();
+      return console.log(this.image);
     },
     home: function() {
       if (!this.homeView) {
