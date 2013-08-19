@@ -203,8 +203,8 @@ window.HomeView = Backbone.View.extend({
 		// }
 
 		//Create image
-		var imageDownload = new Image();
-		imageDownload.src = 'https://sphotos-a.xx.fbcdn.net/hphotos-ash3/1151040_10103324431654235_1355183202_n.jpg';
+		// var imageDownload = new Image();
+		// imageDownload.src = 'https://sphotos-a.xx.fbcdn.net/hphotos-ash3/1151040_10103324431654235_1355183202_n.jpg';
 
 		//data = this.getBase64Image(imageDownload);
 		// /console.log(data);

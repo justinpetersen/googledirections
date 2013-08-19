@@ -46,6 +46,12 @@ ol, ul {
 	visibility:hidden;
 	width:0;
 }
+
+.reposition
+{
+	display: none;
+}
+
 /*
 	Sets the dimensions of the CanvasLoader placeholder <div>, it also centeres it horizontally and vertically inside the wrapper and makes it invisible by default
 */

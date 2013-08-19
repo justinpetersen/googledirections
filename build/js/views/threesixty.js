@@ -38,6 +38,9 @@ window.ThreeSixtyView = Backbone.View.extend( {
 	// The current frame value of the image slider animation
 	currentFrame: 0,
 
+	// The current coordinate values of the frame
+	currentCoords: {},
+
 	// Stores all the loaded image objects
 	frames: [],
 
@@ -53,7 +56,13 @@ window.ThreeSixtyView = Backbone.View.extend( {
 	images: [],
 
 	events: {
-		"click .pause": "onPause"
+		"click .pause": "onPause",
+		"click .reposition": "onReposition"
+	},
+
+	onReposition: function( ) {
+		var imageURL = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + this.currentCoords.lat + "," + this.currentCoords.lng + "&heading=" + $('#degrees').val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
+		$('.current-image').attr('src',imageURL);
 	},
 
 	onPause: function( ) {
@@ -64,11 +73,19 @@ window.ThreeSixtyView = Backbone.View.extend( {
 			window.clearInterval( this.ticker );
 			this.ticker = 0;
 			this.isPaused = true;
+			$('.pause').attr('value','Resume');
+			$('.reposition').show();
 		}
 		else
 		{
-			this.refresh();
-			this.isPaused = false;
+			var imageURL = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + this.currentCoords.lat + "," + this.currentCoords.lng + "&heading=" + $('#degrees').val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
+				
+			$('.current-image').attr('src',imageURL);
+
+
+			//this.refresh();
+			//this.isPaused = false;
+			//$('.pause').attr('value','Pause');
 		}
 	},
 
@@ -382,12 +399,20 @@ window.ThreeSixtyView = Backbone.View.extend( {
 		var pieces = imageURL.split("location=");
 
 		pieces = pieces[1].split("&heading=");
-		coords = pieces[0]
+		coords = pieces[0];
+		//alert(coords);
+
+		var coordPieces = coords.split(",");
+		var lat = coordPieces[0];
+		var lng = coordPieces[1];
+
+		this.currentCoords.lat = lat
+		this.currentCoords.lng = lng
 
 		pieces = pieces[1].split("&sensor=");
-		heading = pieces[0]
+		heading = pieces[0];
 
-		$('#current-coordinates').html("Coords: " + coords);
+		$('#current-coordinates').html("Coords: " + lat + "," + lng);
 		$('#degrees').val(heading);
 	},
 
