@@ -1,27 +1,18 @@
-window.HeaderView = Backbone.View.extend({
+(function() {
+  window.HeaderView = Backbone.View.extend({
+    template: "HeaderView",
+    initialize: function() {
+      return this.render();
+    },
+    render: function() {
+      var that;
+      that = this;
+      $.get("/templates/" + this.template + ".html", function(template) {
+        return $(that.el).html(template);
+      });
+      return this;
+    },
+    selectMenuItem: function() {}
+  });
 
-	template: 'HeaderView',
-	
-	initialize: function() {
-		this.render();
-	},
-
-	render: function() {
-		
-		var that = this;
-		$.get("/templates/" + this.template + ".html", function(template) {
-			$(that.el).html(template);
-		});
-		
-		return this;
-		
-	},
-	
-	selectMenuItem: function() {
-        /*$('.nav li').removeClass('active');
-        if (menuItem) {
-            $('.' + menuItem).addClass('active');
-        }*/
-	}
-
-});
+}).call(this);

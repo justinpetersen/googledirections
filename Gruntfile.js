@@ -13,7 +13,7 @@ module.exports = function (grunt) {
   grunt.initConfig({
     // Application settings
     settings: grunt.util._.extend(grunt.settings, {
-      basePath: './build'
+      basePath: './'
     }),
 
     //
@@ -24,8 +24,8 @@ module.exports = function (grunt) {
       options: {
         force: true
       },
-      css: ['<%= settings.basePath %>/css'],
-      js: ['<%= settings.basePath %>/js']
+      css: ['<%= settings.basePath %>/build/css'],
+      js: ['<%= settings.basePath %>/build/js']
     },
     //
     // grunt-contrib-coffee
@@ -35,9 +35,9 @@ module.exports = function (grunt) {
       app: {
         files: [{
           expand: true,
-          cwd: '<%= settings.basePath %>',
-          src: '**/scripts/*.coffee',
-          dest: '<%= settings.basePath %>/.tmp',
+          cwd: '<%= settings.basePath %>/source/js/coffee',
+          src: '**/*.coffee',
+          dest: '<%= settings.basePath %>/build/js',
           ext: '.js'
         }]
       }
