@@ -9,7 +9,7 @@ window.HomeView = Backbone.View.extend(
   threeSixtyView: null
   onChange: (event) ->
     console.log "HomeView.onChange( )"
-    
+
     # Apply the change to the model
     target = event.target
     change = {}
@@ -47,7 +47,7 @@ window.HomeView = Backbone.View.extend(
       create: true
       exclusive: true
     , ((fileEntry) ->
-    
+
     # fileEntry.isFile === true
     # fileEntry.name == 'log.txt'
     # fileEntry.fullPath == '/log.txt'
@@ -55,14 +55,14 @@ window.HomeView = Backbone.View.extend(
     console.log "Opened file system: " + fs.name
 
   dataURItoBlob: (dataURI, callback) ->
-    
+
     # convert base64 to raw binary data held in a string
     # doesn't handle URLEncoded DataURIs
     byteString = atob(dataURI.split(",")[1])
-    
+
     # separate out the mime component
     mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0]
-    
+
     # write the bytes of the string to an ArrayBuffer
     ab = new ArrayBuffer(byteString.length)
     ia = new Uint8Array(ab)
@@ -71,23 +71,23 @@ window.HomeView = Backbone.View.extend(
     while i < byteString.length
       ia[i] = byteString.charCodeAt(i)
       i++
-    
+
     # write the ArrayBuffer to a blob, and you're done
     bb = new window.WebKitBlobBuilder() # or just BlobBuilder() if not using Chrome
     bb.append ab
     bb.getBlob mimeString
 
   getBase64Image: (img) ->
-    
+
     # Create an empty canvas element
     canvas = document.createElement("canvas")
     canvas.width = img.width
     canvas.height = img.height
-    
+
     # Copy the image contents to the canvas
     ctx = canvas.getContext("2d")
     ctx.drawImage img, 0, 0
-    
+
     # Get the data-URL formatted image
     # Firefox supports PNG and JPEG. You could check img.src to
     # guess the original format, but be aware the using "image/jpg"
@@ -96,7 +96,9 @@ window.HomeView = Backbone.View.extend(
     dataURL.replace /^data:image\/(png|jpg);base64,/, ""
 
   initialize: ->
-    
+
+    @app = new window.AppModel()
+
     # var that = this;
     # $.getImageData({
     #   url: "http://farm4.static.flickr.com/3002/2758349058_ab6dc9cfdc_z.jpg",
@@ -105,40 +107,40 @@ window.HomeView = Backbone.View.extend(
     #     //alert('success');
     #     image.crossOrigin = "Anonymous";
     #     console.log(image);
-    
+
     #     var asdf = new Image();
     #     console.log(asdf);
-    window.requestFileSystem = window.requestFileSystem or window.webkitRequestFileSystem
-    window.requestFileSystem window.PERSISTANT, 5 * 1024 * 1024, @onFileSystemInit, @onFileSystemError #5MB
-    
+    #window.requestFileSystem = window.requestFileSystem or window.webkitRequestFileSystem
+    #window.requestFileSystem window.PERSISTANT, 5 * 1024 * 1024, @onFileSystemInit, @onFileSystemError #5MB
+
     #     // Set up the canvas
     #     var can = document.getElementsByTagName('canvas')[0];
     #     var ctx = can.getContext('2d');
-    
+
     #     // Set the canvas width and heigh to the same as the image
     #     $(can).attr('width', image.width);
     #     $(can).attr('height', image.height);
-    
+
     #     // Draw the image on to the canvas
     #     ctx.drawImage(image, 0, 0, image.width, image.height);
-    
+
     #     // Get the image data
     #     var image_data = ctx.getImageData(0, 0,  image.width, image.height);
-    
+
     #     console.log(image_data);
-    
+
     #     var image_data_array = image_data.data;
-    
+
     #     // Invert every pixel
     #     for (var i = 0, j = image_data_array.length; i < j; i+=4) {
     #       image_data_array[i] = 255 - image_data_array[i];
     #       image_data_array[i+1] = 255 - image_data_array[i+1];
     #       image_data_array[i+2] = 255 - image_data_array[i+2];
     #     }
-    
+
     #     // Write the image data to the canvas
     #     ctx.putImageData(image_data, 0, 0);
-    
+
     #   //   window.requestFileSystem(window.PERSISTENT, 1024*1024, function(fs){
     #    //    fs.root.getFile("image.png", {create:true}, function(fileEntry) {
     #    //        fileEntry.createWriter(function(fileWriter) {
@@ -146,7 +148,7 @@ window.HomeView = Backbone.View.extend(
     #    //        }, this.onFileSystemError);
     #    //    }, this.onFileSystemError);
     #     // }, this.onFileSystemError);
-    
+
     #   },
     #   error: function(xhr, text_status){
     #     alert('error');
@@ -154,21 +156,21 @@ window.HomeView = Backbone.View.extend(
     #     // Handle your error here
     #   }
     # });
-    
+
     # function onInitFs(fs) {
     #   console.log('Opened file system: ' + fs.name);
     # }
     # function errorHandler(fs) {
     #   console.log('Error opening file system');
     # }
-    
+
     #Create image
     # var imageDownload = new Image();
     # imageDownload.src = 'https://sphotos-a.xx.fbcdn.net/hphotos-ash3/1151040_10103324431654235_1355183202_n.jpg';
-    
+
     #data = this.getBase64Image(imageDownload);
     # /console.log(data);
-    
+
     #originAddress: "36.059351,-112.143463",
     #   destinationAddress: "36.059282,-112.14287"
     @model.set
@@ -219,12 +221,29 @@ window.HomeView = Backbone.View.extend(
 
       while j < points.length
         console.log points[j].lat() + ", " + points[j].lng()
+
+
+        console.log @app
+
+
+
         image = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + points[j].lat() + "," + points[j].lng() + "&heading=75&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU"
         images.unshift image
+
+        #TODO: move to constructor
+        googleImage = new window.GoogleImage()
+        googleImage.attributes.url = image
+        googleImage.attributes.directionalDegrees = 75
+        googleImage.attributes.imageId = j
+
+        # add to image collection
+        @app.addImage googleImage
+
+
         j++
       i++
     unless @threeSixtyView
       @threeSixtyView = new ThreeSixtyView()
-      @threeSixtyView.setImages images
+      #@threeSixtyView.setImages images
     $("#threesixty_container").html @threeSixtyView.el
 )

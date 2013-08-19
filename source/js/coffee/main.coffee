@@ -9,6 +9,9 @@ AppRouter = Backbone.Router.extend(
     @headerView = new HeaderView()
     $(".header").html @headerView.el
 
+    @image = new GoogleImage()
+    console.log @image
+
   home: ->
     unless @homeView
       @mapRoute = new MapRoute()
