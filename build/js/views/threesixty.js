@@ -17,45 +17,89 @@
     frames: [],
     endFrame: 0,
     loadedImages: 0,
+    areImagesLoaded: false,
+    animationSpeed: 1000,
     isPaused: false,
     images: [],
     events: {
       "click .pause": "onPause",
-      "click .reposition": "onReposition"
+      "click .reposition": "onReposition",
+      "click .replay": "onReplay",
+      "click .speedup": "onSpeedUp",
+      "click .slowdown": "onSlowDown",
+      "click .delete": "onDelete"
+    },
+    onSpeedUp: function() {
+      this.animationSpeed -= 100;
+      window.clearInterval(this.ticker);
+      this.ticker = 0;
+      return this.refresh();
+    },
+    onSlowDown: function() {
+      return this.animationSpeed += 100;
+    },
+    onDelete: function() {
+      var listItem;
+      this.currentImage = this.images.at(this.currentFrame);
+      listItem = $('#threesixty_images li').get(this.currentFrame);
+      listItem.remove();
+      this.images.remove(this.currentImages);
+      this.currentFrame--;
+      window.clearInterval(this.ticker);
+      this.ticker = 0;
+      return this.refresh();
+    },
+    onSpeedChanged: function() {
+      alert('asdf');
+      return this.animationSpeed = parseInt($("#speed").val());
     },
     onReposition: function() {
-      var imageURL;
-      console.log("@currentFrame: " + this.currentFrame);
       this.currentImage = this.images.at(this.currentFrame);
+      this.currentImage.attributes.directionalDegrees = $("#degrees").val();
+      $(".current-image").attr("src", this.currentImage.url());
       console.log(this.images);
-      console.log(this.currentImage);
-      imageURL = ("http://maps.googleapis.com/maps/api/streetview?gid=" + this.currentImage.cid + "&size=400x400&location=") + this.currentImage.attributes.coords.lat + "," + this.currentImage.attributes.coords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
-      $(".current-image").attr("src", imageURL);
-      this.loadedImages = this.currentFrame;
-      return this.newHeading = $("#degrees").val();
+      return this.newHeading = parseInt($("#degrees").val());
+    },
+    onReplay: function() {
+      this.isPaused = false;
+      $(".current-image").removeClass("current-image").addClass('previous-image');
+      this.currentFrame = 0;
+      $(".pause").attr("value", "Pause");
+      $(".reposition").hide();
+      window.clearInterval(this.ticker);
+      this.ticker = 0;
+      this.loadedImages = 0;
+      return this.refresh();
     },
     onPause: function() {
-      var i;
+      var i, listItem;
       if (!this.isPaused) {
-        if (this.newHeading !== this.currentHeading) {
-          alert('updating frames');
-          i = this.currentFrame;
-          while (i < this.images.length) {
-            (this.images.at(i)).attributes.directionalDegrees = this.newHeading;
-            console.log(this.images.at(i));
-            i++;
-          }
-          $(".current-image").attr("src", (this.images.at(this.currentFrame)).url());
-          this.currentHeading = this.newHeading;
-        }
         window.clearInterval(this.ticker);
         this.ticker = 0;
         this.isPaused = true;
         $(".pause").attr("value", "Resume");
         return $(".reposition").show();
       } else {
+        $(".pause").attr("value", "Pause");
+        $(".reposition").hide();
+        if (this.newHeading !== this.currentHeading) {
+          this.currentHeading = this.newHeading;
+          i = this.currentFrame;
+          while (i < (this.currentFrame + 10)) {
+            (this.images.at(i)).attributes.directionalDegrees = this.newHeading;
+            console.log(this.images);
+            console.log((this.images.at(i)).url());
+            listItem = $('#threesixty_images li').get(i);
+            console.log(listItem);
+            $('img', listItem).attr('src', (this.images.at(i)).url());
+            i++;
+          }
+        }
         this.isPaused = false;
-        return $(".current-image").attr("src", (this.images.at(this.currentFrame)).url());
+        $(".current-image").attr("src", (this.images.at(this.currentFrame)).url());
+        window.clearInterval(this.ticker);
+        this.ticker = 0;
+        return this.refresh();
       }
     },
     initialize: function() {
@@ -194,15 +238,15 @@
       $("#spinner span").text(Math.floor(this.loadedImages / this.totalFrames * 100) + "%");
       if (this.loadedImages === this.totalFrames) {
         console.log("All images loaded");
+        this.areImagesLoaded = true;
         this.frames[0].removeClass("previous-image").addClass("current-image");
         that = this;
-        $("#spinner").fadeOut("slow", function() {
+        return $("#spinner").fadeOut("slow", function() {
           that.spinner.hide();
           return that.showThreesixty();
         });
-        return alert('dpnoe');
       } else {
-        if (!this.isPaused) {
+        if (!this.areImagesLoaded) {
           return this.loadImage();
         }
       }
@@ -245,7 +289,7 @@
       console.log("refresh");
       console.log("ticker: " + this.ticker);
       if (this.ticker === 0) {
-        this.ticker = window.setInterval($.proxy(this.renderFrame, this), Math.round(500));
+        this.ticker = window.setInterval($.proxy(this.renderFrame, this), Math.round(this.animationSpeed));
         return console.log("set interval");
       }
     },
@@ -261,11 +305,18 @@
     */
 
     showCurrentFrame: function() {
-      console.log(this.getNormalizedCurrentFrame());
+      var url;
+      console.log(this.frames[this.getNormalizedCurrentFrame()]);
       this.frames[this.getNormalizedCurrentFrame()].removeClass("previous-image").addClass("current-image");
-      this.recentFrame = this.currentFrame - 1;
+      if ($('.current-image').length === 0) {
+        this.currentFrame++;
+        this.showCurrentFrame();
+        return;
+      }
+      this.recentFrame = this.currentFrame;
       this.currentImage = this.images.at(this.recentFrame);
-      $("#current-coordinates").html("Frame: " + this.recentFrame + "<br>cid: " + this.currentImage.cid + ", Coords: " + this.currentImage.attributes.coords.lat + "," + this.currentImage.attributes.coords.lng);
+      url = $('.current-image').attr('src');
+      $("#current-coordinates").html("URL: " + url + "<br>Frame: " + this.recentFrame + "<br>heading: " + this.currentImage.attributes.directionalDegrees + "<br>cid: " + this.currentImage.cid + ", Coords: " + this.currentImage.attributes.coords.lat + "," + this.currentImage.attributes.coords.lng);
       return $("#degrees").val(this.currentImage.attributes.directionalDegrees);
     },
     /*

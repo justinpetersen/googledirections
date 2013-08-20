@@ -49,44 +49,87 @@ window.ThreeSixtyView = Backbone.View.extend(
   # We keep track of the loaded images by increasing every time a new image is added to the image slider
   loadedImages: 0
 
+  areImagesLoaded: false
+
+  animationSpeed: 1000
+
   # Stores whether or not the animation is paused
   isPaused: false
   images: []
   events:
     "click .pause": "onPause"
     "click .reposition": "onReposition"
+    "click .replay": "onReplay"
+    "click .speedup": "onSpeedUp"
+    "click .slowdown": "onSlowDown"
+    "click .delete": "onDelete"
+
+
+  onSpeedUp: ->
+    #alert 'asdf'
+    @animationSpeed -= 100
+    window.clearInterval @ticker
+    @ticker = 0
+    @refresh()
+
+  onSlowDown: ->
+    @animationSpeed += 100
+
+  onDelete: ->
+    @currentImage = @images.at @currentFrame
+    listItem = $('#threesixty_images li').get(@currentFrame)
+    #@frames.remove @currentFrame
+    listItem.remove()
+    @images.remove @currentImages
+
+    @currentFrame--
+
+    window.clearInterval @ticker
+    @ticker = 0
+    @refresh()
+
+
+  onSpeedChanged: ->
+    alert 'asdf'
+    @animationSpeed = parseInt $("#speed").val()
 
   onReposition: ->
-    console.log "@currentFrame: #{@currentFrame}" 
+
     @currentImage = @images.at @currentFrame
+    @currentImage.attributes.directionalDegrees = $("#degrees").val()
+
+    #imageURL = "http://maps.googleapis.com/maps/api/streetview?gid=#{@currentImage.cid}&size=400x400&location=" + @currentImage.attributes.coords.lat + "," + @currentImage.attributes.coords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU"
+
+
+    $(".current-image").attr "src", @currentImage.url()
     console.log @images
-    console.log @currentImage
-    #alert @currentImage.cid
-    imageURL = "http://maps.googleapis.com/maps/api/streetview?gid=#{@currentImage.cid}&size=400x400&location=" + @currentImage.attributes.coords.lat + "," + @currentImage.attributes.coords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU"
 
+    #@loadedImages = @currentFrame
+    @newHeading = parseInt $("#degrees").val()
 
-    $(".current-image").attr "src", imageURL
+  onReplay: ->
 
-    @loadedImages = @currentFrame
+    @isPaused = false
+    $(".current-image").removeClass("current-image").addClass('previous-image')
+    @currentFrame = 0
+    #$('#threesixty_images').html ''
+    #@renderFrame()
+    #$(".current-image").attr "src", (@images.at(0)).url()
 
-    @newHeading = $("#degrees").val()
+    $(".pause").attr "value", "Pause"
+    $(".reposition").hide()
+
+    window.clearInterval @ticker
+    @ticker = 0
+    @loadedImages = 0
+    #@loadImage()
+
+    @refresh()
+
 
   onPause: ->
 
     unless @isPaused
-      if @newHeading isnt @currentHeading
-
-        alert 'updating frames'
-        i = @currentFrame
-        while i < @images.length
-          (@images.at(i)).attributes.directionalDegrees = @newHeading
-          console.log @images.at i
-          i++
-
-
-        $(".current-image").attr "src", (@images.at(@currentFrame)).url()
-        @currentHeading = @newHeading
-
 
       window.clearInterval @ticker
       @ticker = 0
@@ -95,22 +138,31 @@ window.ThreeSixtyView = Backbone.View.extend(
       $(".reposition").show()
       #$(".current-image").attr "src", imageURL
     else
-      #imageURL = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + @currentCoords.lat + "," + @currentCoords.lng + "&heading=" + $("#degrees").val() + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU"
+      $(".pause").attr "value", "Pause"
+      $(".reposition").hide()
+      if @newHeading isnt @currentHeading
+
+        #$(".current-image").attr "src", (@images.at(@currentFrame)).url()
+        @currentHeading = @newHeading
+
+        i = @currentFrame
+        while i < (@currentFrame + 10)
+          (@images.at(i)).attributes.directionalDegrees = @newHeading
+          console.log @images
+          console.log (@images.at(i)).url()
+          listItem = $('#threesixty_images li').get(i)
+          console.log listItem
+          $('img', listItem).attr 'src', (@images.at(i)).url()
+          i++
+
       @isPaused = false
       $(".current-image").attr "src", (@images.at(@currentFrame)).url()
+      window.clearInterval @ticker
+      @ticker = 0
+      @refresh()
 
-      
 
-
-  #this.refresh();
-  #this.isPaused = false;
-  #$('.pause').attr('value','Pause');
   initialize: ->
-    #@app = new window.AppModel
-    #@googleImages = @app.attributes.googleImages
-    #console.log 'HERE'
-    #console.log @app
-    #console.log @googleImages
     @render()
 
   render: ->
@@ -310,6 +362,7 @@ window.ThreeSixtyView = Backbone.View.extend(
     # Checks if the currently loaded image is the last one in the sequence...
     if @loadedImages is @totalFrames
       console.log "All images loaded"
+      @areImagesLoaded = true
 
       # ...if so, it makes the first image in the sequence to be visible by removing the "previous-image" class and applying the "current-image" on it
       @frames[0].removeClass("previous-image").addClass "current-image"
@@ -322,10 +375,9 @@ window.ThreeSixtyView = Backbone.View.extend(
       $("#spinner").fadeOut "slow", ->
         that.spinner.hide()
         that.showThreesixty()
-      alert 'dpnoe'
     else
       # ...if not, Loads the next image in the sequence
-      unless @isPaused
+      unless @areImagesLoaded
         @loadImage()
 
 
@@ -395,7 +447,7 @@ window.ThreeSixtyView = Backbone.View.extend(
     if @ticker is 0
 
       # Let's create a new one!
-      @ticker = window.setInterval($.proxy(@renderFrame, this), Math.round(500))
+      @ticker = window.setInterval($.proxy(@renderFrame, this), Math.round(@animationSpeed))
       console.log "set interval"
 
 
@@ -420,13 +472,18 @@ window.ThreeSixtyView = Backbone.View.extend(
     #     Replaces the "current-image" class with the "previous-image" one on the image.
     #     It calls the "getNormalizedCurrentFrame" method to translate the "currentFrame" value to the "totalFrames" range (1-180 by default).
     #
-    console.log @getNormalizedCurrentFrame()
+    console.log @frames[@getNormalizedCurrentFrame()]
     @frames[@getNormalizedCurrentFrame()].removeClass("previous-image").addClass "current-image"
+    if $('.current-image').length is 0
+      @currentFrame++
+      @showCurrentFrame()
+      return
 
-    @recentFrame = @currentFrame - 1
+    @recentFrame = @currentFrame
     @currentImage = @images.at(@recentFrame)
+    url = $('.current-image').attr 'src'
 
-    $("#current-coordinates").html "Frame: #{@recentFrame}<br>cid: #{@currentImage.cid}, Coords: #{@currentImage.attributes.coords.lat},#{@currentImage.attributes.coords.lng}"
+    $("#current-coordinates").html "URL: #{url}<br>Frame: #{@recentFrame}<br>heading: #{@currentImage.attributes.directionalDegrees}<br>cid: #{@currentImage.cid}, Coords: #{@currentImage.attributes.coords.lat},#{@currentImage.attributes.coords.lng}"
     $("#degrees").val @currentImage.attributes.directionalDegrees
 
 
