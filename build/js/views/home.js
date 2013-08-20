@@ -1,123 +1,157 @@
-window.HomeView = Backbone.View.extend({
+(function() {
+  window.HomeView = Backbone.View.extend({
+    template: "HomeView",
+    events: {
+      change: "onChange",
+      "click .getDirections": "onGetDirections"
+    },
+    map: null,
+    directionsRenderer: null,
+    threeSixtyView: null,
+    onChange: function(event) {
+      var change, target;
+      console.log("HomeView.onChange( )");
+      target = event.target;
+      return change = {};
+    },
+    onGetDirections: function() {
+      console.log("HomeView.onGetDirections( )");
+      return this.getDirections(this.model.get("originAddress"), this.model.get("destinationAddress"));
+    },
+    onRoute: function(result, status) {
+      console.log("HomeView.onRoute( " + result + ", " + status + ")");
+      return this.renderRoute(result);
+    },
+    onFileSystemError: function(e) {
+      var msg;
+      msg = "";
+      switch (e.code) {
+        case FileError.QUOTA_EXCEEDED_ERR:
+          msg = "QUOTA_EXCEEDED_ERR";
+          break;
+        case FileError.NOT_FOUND_ERR:
+          msg = "NOT_FOUND_ERR";
+          break;
+        case FileError.SECURITY_ERR:
+          msg = "SECURITY_ERR";
+          break;
+        case FileError.INVALID_MODIFICATION_ERR:
+          msg = "INVALID_MODIFICATION_ERR";
+          break;
+        case FileError.INVALID_STATE_ERR:
+          msg = "INVALID_STATE_ERR";
+          break;
+        default:
+          msg = "Unknown Error";
+      }
+      return console.log("Error: " + msg);
+    },
+    onFileSystemInit: function(fs) {
+      fs.root.getFile("images.txt", {
+        create: true,
+        exclusive: true
+      }, (function(fileEntry) {}), this.onFileSystemError);
+      return console.log("Opened file system: " + fs.name);
+    },
+    dataURItoBlob: function(dataURI, callback) {
+      var ab, bb, byteString, i, ia, mimeString;
+      byteString = atob(dataURI.split(",")[1]);
+      mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+      ab = new ArrayBuffer(byteString.length);
+      ia = new Uint8Array(ab);
+      i = 0;
+      while (i < byteString.length) {
+        ia[i] = byteString.charCodeAt(i);
+        i++;
+      }
+      bb = new window.WebKitBlobBuilder();
+      bb.append(ab);
+      return bb.getBlob(mimeString);
+    },
+    getBase64Image: function(img) {
+      var canvas, ctx, dataURL;
+      canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      dataURL = canvas.toDataURL("image/png");
+      return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+    },
+    initialize: function() {
+      this.app = new window.AppModel();
+      this.model.set({
+        originAddress: "36.057333,-112.143586",
+        destinationAddress: "36.065096,-112.137107"
+      });
+      return this.render();
+    },
+    getDirections: function(origin, destination) {
+      var directionsService, request;
+      request = {
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.WALKING
+      };
+      directionsService = new google.maps.DirectionsService();
+      return directionsService.route(request, $.proxy(this.onRoute, this));
+    },
+    render: function() {
+      var that;
+      that = this;
+      $.get("/templates/" + this.template + ".html", function(template) {
+        $(that.el).html(template);
+        return that.initMap();
+      });
+      return this;
+    },
+    initMap: function() {
+      var mapOptions;
+      mapOptions = {
+        center: new google.maps.LatLng(-34.397, 150.644),
+        zoom: 8,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      this.map = new google.maps.Map(document.getElementById("map_container"), mapOptions);
+      this.directionsRenderer = new google.maps.DirectionsRenderer();
+      this.directionsRenderer.setMap(this.map);
+      return this.directionsRenderer.setPanel(document.getElementById("directions_container"));
+    },
+    renderRoute: function(result) {
+      var googleImage, i, image, images, j, points, steps;
+      this.directionsRenderer.setDirections(result);
+      images = [];
+      image = "";
+      steps = result.routes[0].legs[0].steps;
+      points = [];
+      i = 0;
+      while (i < steps.length) {
+        points = google.maps.geometry.encoding.decodePath(steps[i].polyline.points);
+        j = 0;
+        while (j < points.length) {
+          image = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + points[j].lat() + "," + points[j].lng() + "&heading=75&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU";
+          images.unshift(image);
+          googleImage = new window.GoogleImage();
+          googleImage.attributes.url = image;
+          googleImage.attributes.directionalDegrees = 75;
+          googleImage.attributes.imageId = j;
+          googleImage.attributes.coords = {
+            'lat': points[j].lat(),
+            'lng': points[j].lng()
+          };
+          this.app.addImage(googleImage);
+          j++;
+        }
+        i++;
+      }
+      if (!this.threeSixtyView) {
+        this.threeSixtyView = new ThreeSixtyView();
+        console.log("@app.attributes.googleImages");
+        console.log(this.app.attributes.googleImages);
+        this.threeSixtyView.setImages(this.app.attributes.googleImages);
+      }
+      return $("#threesixty_container").html(this.threeSixtyView.el);
+    }
+  });
 
-	template: 'HomeView',
-	
-	events: {
-		"change": "onChange",
-		"click .getDirections": "onGetDirections"
-	},
-	
-	map: null,
-	directionsRenderer: null,
-	threeSixtyView: null,
-	
-	onChange: function( event ) {
-		
-		console.log( "HomeView.onChange( )" );
-		
-        // Apply the change to the model
-        var target = event.target;
-        var change = {};
-        change[ target.name ] = target.value;
-        this.model.set(change);
-		
-		console.log( target.name + ": " + target.value );
-		
-	},
-	
-	onGetDirections: function( ) {
-		
-		console.log( "HomeView.onGetDirections( )" );
-		
-		this.getDirections( this.model.get("originAddress"), this.model.get("destinationAddress") );
-		
-	},
-	
-	onRoute: function( result, status ) {
-		
-		console.log( "HomeView.onRoute( " + result + ", " + status + ")" );
-		
-		this.renderRoute( result );
-		
-	},
-	
-	initialize: function( ) {
-		
-		this.model.set( {
-			originAddress: "500 Stanyan St, San Francisco",
-			destinationAddress: "118 King St, San Francisco"
-		} );
-		this.render( );
-		
-	},
-	
-	getDirections: function( origin, destination ) {
-		
-		var request = {
-			origin: origin,
-			destination: destination,
-			travelMode: google.maps.TravelMode.DRIVING
-		};
-		var directionsService = new google.maps.DirectionsService( );
-		directionsService.route( request, $.proxy( this.onRoute, this ) );
-		
-	},
-
-	render: function( ) {
-		
-		var that = this;
-		$.get( "/templates/" + this.template + ".html", function( template ) {
-			$( that.el ).html( template );
-			that.initMap();
-		});
-		
-		return this;
-		
-	},
-	
-	initMap: function( ) {
-		
-		var mapOptions = {
-			center: new google.maps.LatLng(-34.397, 150.644),
-			zoom: 8,
-			mapTypeId: google.maps.MapTypeId.ROADMAP
-		};
-		this.map = new google.maps.Map( document.getElementById('map_container'), mapOptions );
-
-		this.directionsRenderer = new google.maps.DirectionsRenderer( );
-		this.directionsRenderer.setMap( this.map );
-		this.directionsRenderer.setPanel( document.getElementById('directions_container') );
-		
-	},
-	
-	renderRoute: function( result ) {
-		
-		this.directionsRenderer.setDirections( result );
-		
-		var images = [];
-		var image = "";
-		var steps = result.routes[0].legs[0].steps;
-		var points = [];
-		for ( var i = 0; i < steps.length; i++ ) {
-			
-			points = google.maps.geometry.encoding.decodePath( steps[ i ].polyline.points );
-			
-			for ( var j = 0; j < points.length; j++ ) {
-				
-				console.log( points[ j ].lat( ) + ", " + points[ j ].lng( ) );
-				image = "http://maps.googleapis.com/maps/api/streetview?size=400x400&location=" + points[ j ].lat( ) + "," + points[ j ].lng( ) + "&sensor=false&key=AIzaSyCyUdEWUkmZFkb1jmDjWi2UmZ345Rvb4sU&heading=0";
-				images.unshift( image );
-				
-			}
-			
-		}
-		
-		if (!this.threeSixtyView) {
-			this.threeSixtyView = new ThreeSixtyView();
-			this.threeSixtyView.setImages( images );
-		}
-		$('#threesixty_container').html(this.threeSixtyView.el);
-		
-	}
-
-});
+}).call(this);

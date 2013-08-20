@@ -13,13 +13,14 @@ ol, ul {
 	/* This one fixes the IE positioning bug */
 	overflow:hidden;
 	width:400px;
-	height:400px;
+	/*height:400px;*/
 }
 /*
 	Makes the image slider invisible by default
 */
 #threesixty_images {
 	display: none;
+	height:400px;
 }
 /*
 	Sets every image in the slider to be absolute positioned and dynamically sized.
@@ -45,6 +46,12 @@ ol, ul {
 	visibility:hidden;
 	width:0;
 }
+
+.reposition
+{
+	display: none;
+}
+
 /*
 	Sets the dimensions of the CanvasLoader placeholder <div>, it also centeres it horizontally and vertically inside the wrapper and makes it invisible by default
 */
@@ -59,7 +66,7 @@ ol, ul {
 	display:none;
 }
 /*
-	Sets the style of the percentage <span> of the preloader by setting its dimensions and centering it horizontally and vertically 
+	Sets the style of the percentage <span> of the preloader by setting its dimensions and centering it horizontally and vertically
 */
 #spinner span {
 	position:absolute;
